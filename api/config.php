@@ -1,9 +1,10 @@
 <?php
 function getEnvVars() {
-    // The user created .env inside the 'backend' folder via Hostinger File Manager
-    // In production, 'api' is at public_html/it/api/ and backend is at public_html/it/backend/
     $env_file = __DIR__ . '/../backend/.env';
-    if (!file_exists($env_file)) return [];
+    if (!file_exists($env_file)) {
+        http_response_code(500);
+        die(json_encode(["error" => "Critical Error: Could not find your .env file! Expected it at: " . $env_file]));
+    }
     
     $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     $vars = [];
@@ -35,7 +36,7 @@ try {
     $db->set_charset("utf8mb4");
 } catch (Exception $e) {
     http_response_code(500);
-    die(json_encode(["error" => "Database connection failed"]));
+    die(json_encode(["error" => "DB Error: " . $e->getMessage() . " (Host: " . DB_HOST . ", User: " . DB_USER . ")"]));
 }
 
 // Helper Functions
