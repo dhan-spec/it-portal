@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
@@ -21,8 +22,34 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
+// Middleware to protect routes
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (!token) return res.status(401).json({ error: 'Access denied. No token provided.' });
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ error: 'Invalid or expired token.' });
+        req.user = user;
+        next();
+    });
+};
+
+// POST: Login endpoint
+app.post('/api/login', (req, res) => {
+    const { password } = req.body;
+    
+    if (password === process.env.ADMIN_PASSWORD) {
+        const token = jwt.sign({ role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '24h' });
+        res.json({ token });
+    } else {
+        res.status(401).json({ error: 'Invalid password' });
+    }
+});
+
 // GET: List all assets
-app.get('/api/assets', async (req, res) => {
+app.get('/api/assets', authenticateToken, async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM assets ORDER BY created_at DESC');
         res.json(rows);
@@ -32,8 +59,22 @@ app.get('/api/assets', async (req, res) => {
     }
 });
 
+// GET: Single asset by Tag
+app.get('/api/assets/:tag', async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT * FROM assets WHERE asset_tag = ? LIMIT 1', [req.params.tag]);
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Asset not found' });
+        }
+        res.json(rows[0]);
+    } catch (error) {
+        console.error('Error fetching asset:', error);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
 // POST: Add new asset
-app.post('/api/assets', async (req, res) => {
+app.post('/api/assets', authenticateToken, async (req, res) => {
     const { name, asset_tag, type, location, ip_address } = req.body;
     
     if (!name || !asset_tag || !type) {
