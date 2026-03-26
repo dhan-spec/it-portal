@@ -1,0 +1,12 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Pass Authorization header to PHP in CGi environments (like Hostinger)
+    RewriteCond %{HTTP:Authorization} ^(.*)
+    RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
+
+    # API Routing
+    RewriteRule ^login$ login.php [QSA,L]
+    RewriteRule ^assets$ assets.php [QSA,L]
+    RewriteRule ^assets/(.*)$ asset_detail.php?tag=$1 [QSA,L]
+</IfModule>
