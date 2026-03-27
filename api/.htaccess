@@ -9,5 +9,4 @@
     RewriteRule ^login$ login.php [QSA,L]
     RewriteRule ^assets$ assets.php [QSA,L]
     RewriteRule ^assets/(.*)$ asset_detail.php?tag=$1 [QSA,L]
-    RewriteRule ^logs$ logs.php [QSA,L]
 </IfModule>
