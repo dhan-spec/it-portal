@@ -48,6 +48,27 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 try {
     $db = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
     $db->set_charset("utf8mb4");
+
+    // Auto-migrate critical tables to ensure Hostinger deployments never crash
+    $db->query("CREATE TABLE IF NOT EXISTS reported_problems (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        asset_tag VARCHAR(50) NOT NULL,
+        description TEXT NOT NULL,
+        urgency ENUM('Low', 'Medium', 'High') DEFAULT 'Medium',
+        status ENUM('Pending', 'In Progress', 'Resolved') DEFAULT 'Pending',
+        reported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $db->query("CREATE TABLE IF NOT EXISTS maintenance_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        asset_tag VARCHAR(50) NOT NULL,
+        date DATE NOT NULL,
+        description TEXT NOT NULL,
+        technician VARCHAR(100) NOT NULL,
+        photo_path VARCHAR(255) DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+
 } catch (Exception $e) {
     http_response_code(500);
     die(json_encode(["error" => "DB Error: " . $e->getMessage() . " (Host: " . DB_HOST . ", User: " . DB_USER . ")"]));
