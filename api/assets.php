@@ -21,6 +21,8 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $type = isset($data->type) ? $data->type : '';
     $location = isset($data->location) ? $data->location : '';
     $ip_address = isset($data->ip_address) ? $data->ip_address : '';
+    $status = isset($data->status) ? $data->status : 'Online';
+    $photo = isset($data->photo) ? $data->photo : null;
 
     if (!$name || !$asset_tag || !$type) {
         http_response_code(400);
@@ -28,8 +30,8 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $stmt = $db->prepare("INSERT INTO assets (name, asset_tag, type, location, ip_address) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssss", $name, $asset_tag, $type, $location, $ip_address);
+    $stmt = $db->prepare("INSERT INTO assets (name, asset_tag, type, location, ip_address, status, photo) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssssss", $name, $asset_tag, $type, $location, $ip_address, $status, $photo);
     if ($stmt->execute()) {
         http_response_code(201);
         echo json_encode(["message" => "Asset added successfully", "id" => $db->insert_id]);

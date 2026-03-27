@@ -1,9 +1,24 @@
 <?php
 function getEnvVars() {
-    // The user created .env inside the 'backend' folder via Hostinger File Manager
-    // In production, 'api' is at public_html/it/api/ and backend is at public_html/it/backend/
-    $env_file = __DIR__ . '/../backend/.env';
-    if (!file_exists($env_file)) return [];
+    $search_paths = [
+        __DIR__ . '/../backend/.env',           // Inside backend
+        __DIR__ . '/../.env',                   // Inside it folder
+        __DIR__ . '/../../.env',                // Inside public_html
+        __DIR__ . '/../../../.env'              // Inside domains root (Safest)
+    ];
+
+    $env_file = false;
+    foreach ($search_paths as $path) {
+        if (file_exists($path)) {
+            $env_file = $path;
+            break;
+        }
+    }
+
+    if (!$env_file) {
+        http_response_code(500);
+        die(json_encode(["error" => "Critical Error: Hostinger Git Deployment deleted your .env file! Please recreate .env inside your public_html folder to prevent it from being deleted again."]));
+    }
     
     $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     $vars = [];
@@ -35,7 +50,7 @@ try {
     $db->set_charset("utf8mb4");
 } catch (Exception $e) {
     http_response_code(500);
-    die(json_encode(["error" => "Database connection failed"]));
+    die(json_encode(["error" => "DB Error: " . $e->getMessage() . " (Host: " . DB_HOST . ", User: " . DB_USER . ")"]));
 }
 
 // Helper Functions
