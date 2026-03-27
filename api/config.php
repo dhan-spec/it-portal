@@ -96,6 +96,9 @@ function auth_guard() {
     if (empty($auth) && isset($_SERVER['HTTP_AUTHORIZATION'])) {
         $auth = $_SERVER['HTTP_AUTHORIZATION'];
     }
+    if (empty($auth) && isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $auth = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+    }
     
     $token = str_replace('Bearer ', '', $auth);
     if (trim($token) !== STATIC_TOKEN) {
