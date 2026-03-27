@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-$db = getConnection();
+// $db is already available from config.php
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     auth_guard();
